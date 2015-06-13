@@ -14,7 +14,16 @@
 
 using namespace std;
 
-#define PI	3.141592
+#ifndef PI
+	#define PI	3.14159265358979
+#endif
+#ifndef D2R
+	#define D2R	0.01745329251994327	//(PI/180.)
+#endif
+#ifndef R2D
+	#define R2D	57.2957795130823799	//(180./PI)
+#endif
+
 
 int main() {
 //	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
@@ -36,12 +45,14 @@ int main() {
 	SpiceDouble   state[6];
 	SpiceDouble   lt;
 
-	furnsh_c( "naif0008.tls" );
+	furnsh_c( "naif0008.tls" );	// Load the leapseconds kernel naif0008.tls
 	furnsh_c( "pck00008.tpc" );
-	furnsh_c ( "de405.bsp" );
+	furnsh_c ( "de405.bsp" );	// Load the planetary ephemeris SPK file de405s.bsp.
 	furnsh_c ( "mgs_ext22.bsp" );
 
-	str2et_c( "2020 SEP 22 20:15", &et );
+	//	convert UTC to ET
+//	str2et_c( "2020-SEP-22 20:13:55", &et );
+	utc2et_c( "2020-09-22T20:15:00", &et );
 
 	SpiceDouble earth_orient[3] = {0.0, 0.0, 0.0};
 	SpiceDouble u_vec[3] = {1.0, 0.0, 0.0};
@@ -62,11 +73,17 @@ int main() {
 //		spkezr_c( "MOON", et, "J2000", "NONE", "EARTH", state, &lt );
 
 
+		printf("\nJulian Date=%.5f\n\n", et/86400.0 );
+
+		printf("[Earth]\n");
+
 		spkezr_c( "EARTH", et, "J2000", "NONE", "SUN", state, &lt );
 //		fprintf(fp, "%.0f %.0f %.0f ", state[0], state[1], state[2]);
-		printf("Earth  et %.2f \nP %.3f %.3f %.3f V %.3f %.3f %.3f \ntheta=%.3f [deg]\n",
-				et/86400.0, state[0], state[1], state[2], state[3], state[4], state[5],
-				atan2(state[1], state[0])*180.0/PI );
+		printf("Earth Pos in Solar coordinate= %.3f %.3f %.3f [km]\n"
+				"     Vel= %.3f %.3f %.3f [km/s]\n"
+				"     theta=%.3f [deg]\n",
+				state[0], state[1], state[2], state[3], state[4], state[5],
+				atan2(state[1], state[0])*R2D );
 
 //		pxform_c( "J2000", "IAU_EARTH", et, mat );
 		pxform_c( "IAU_EARTH", "J2000", et, mat );
@@ -75,9 +92,16 @@ int main() {
 		earth_orient[2] = mat[2][0]*u_vec[0] + mat[2][1]*u_vec[1] + mat[2][2]*u_vec[2];
 //		fprintf(fp, "%f %f %f ", earth_orient[0], earth_orient[1], earth_orient[2]);
 
-		printf( "earth_orient %f %f %f,  theta=%.3f [deg]\n", earth_orient[0], earth_orient[1], earth_orient[2],
-				atan2(earth_orient[1], earth_orient[0])*180.0/PI +128+180);
+		double earth_spherical[2];
+		earth_spherical[0] = atan2( earth_orient[1], earth_orient[0] );
+		earth_spherical[1] = atan2( earth_orient[2], sqrt(earth_orient[0]*earth_orient[0]+earth_orient[1]*earth_orient[1]) );
 
+		printf( "Earth_orientation vector = (%f %f %f)\n     RA= %f  DEC= %f [deg]\n",
+				earth_orient[0], earth_orient[1], earth_orient[2],
+				earth_spherical[0]*R2D + 360.0, earth_spherical[1]*R2D);
+
+		// ----------------------------------------------------------------
+		printf("\n");
 		spkezr_c( "MOON", et, "J2000", "NONE", "EARTH", state, &lt );
 //		fprintf(fp, "%.0f %.0f %.0f ", state[0], state[1], state[2]);
 		printf( "Moon %.0f %.0f %.0f \n", state[0], state[1], state[2]);
