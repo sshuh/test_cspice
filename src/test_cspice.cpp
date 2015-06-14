@@ -45,10 +45,10 @@ int main() {
 	SpiceDouble   state[6];
 	SpiceDouble   lt;
 
-	furnsh_c( "naif0008.tls" );	// Load the leapseconds kernel naif0008.tls
-	furnsh_c( "pck00008.tpc" );
-	furnsh_c ( "de405.bsp" );	// Load the planetary ephemeris SPK file de405s.bsp.
-	furnsh_c ( "mgs_ext22.bsp" );
+	furnsh_c( "/home/sshuh/workspace/test_cspice/Debug/naif0011.tls" );	// Load the leapseconds kernel naif0008.tls
+	furnsh_c( "/home/sshuh/workspace/test_cspice/Debug/pck00010.tpc" );
+	furnsh_c ( "/home/sshuh/workspace/test_cspice/Debug/de405.bsp" );	// Load the planetary ephemeris SPK file de405s.bsp.
+	furnsh_c ( "/home/sshuh/workspace/test_cspice/Debug/mgs_ext22.bsp" );
 
 	//	convert UTC to ET
 //	str2et_c( "2020-SEP-22 20:13:55", &et );
@@ -73,7 +73,17 @@ int main() {
 //		spkezr_c( "MOON", et, "J2000", "NONE", "EARTH", state, &lt );
 
 
-		printf("\nJulian Date=%.5f\n\n", et/86400.0 );
+		SpiceDouble spd86400 = spd_c(); // seconds per day
+
+		SpiceChar* utcstr;
+		et2utc_c ( et, "J", 6, 35, utcstr );
+		printf("\n%s  J2000=%f\n", utcstr, j2000_c() );
+
+		printf("\nJulian Date=%.5f\n\n", et/spd86400 );
+
+
+//		SpiceDouble spref = ( jed - j2000_c() ) * spd_c();
+
 
 		printf("[Earth]\n");
 
